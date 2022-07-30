@@ -46,7 +46,7 @@ public class UserDaoHibernateImpl implements UserDao {
             try {
                 session.beginTransaction();
                 session.createSQLQuery(DELETE_TABLE)
-                                .executeUpdate();
+                        .executeUpdate();
                 System.out.println("Таблица с именем \"user\" удалена");
                 session.getTransaction().commit();
             } catch (HibernateException e) {

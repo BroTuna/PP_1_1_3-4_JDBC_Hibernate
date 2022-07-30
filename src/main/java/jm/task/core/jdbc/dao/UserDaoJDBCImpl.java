@@ -11,8 +11,8 @@ import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
     private List<User> users = new ArrayList<>();
-    private static final Connection connection = Util.getConnection();
-    private static Statement statement;
+    private static final Connection CONNECTION = Util.getConnection();
+
     private static final String CREATE = "CREATE TABLE IF NOT EXISTS test (" +
             "id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY ," +
             "name varchar(45) not null ," +
@@ -29,63 +29,56 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void createUsersTable() {
-        try {
-            statement = connection.createStatement();
+        try (Statement statement = CONNECTION.createStatement()) {
             statement.executeUpdate(CREATE);
             System.out.println("Таблица создана");
-            connection.commit();
+            CONNECTION.commit();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void dropUsersTable() {
-        try {
-            statement = connection.createStatement();
+        try (Statement statement = CONNECTION.createStatement()) {
             statement.executeUpdate(DELETE_TABLE);
             System.out.println("Таблица удалена");
-            connection.commit();
+            CONNECTION.commit();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        try {
-            statement = connection.createStatement();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(INSERT);
+        try (PreparedStatement preparedStatement = CONNECTION.prepareStatement(INSERT)) {
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, lastName);
             preparedStatement.setByte(3, age);
             preparedStatement.executeUpdate();
             System.out.println("User с именем - " + name + " добавлен в базу данных");
-            connection.commit();
+            CONNECTION.commit();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            try {
+                CONNECTION.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            e.printStackTrace();
         }
     }
 
     public void removeUserById(long id) {
-        try {
-            statement = connection.createStatement();
-            PreparedStatement preparedStatement = connection.prepareStatement(DELETE);
+        try (PreparedStatement preparedStatement = CONNECTION.prepareStatement(DELETE)) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
             System.out.println("User с id = " + id + " удален из базы данных");
-            connection.commit();
-
+            CONNECTION.commit();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public List<User> getAllUsers() {
-        try {
-            statement = connection.createStatement();
+        try (Statement statement = CONNECTION.createStatement()) {
             ResultSet resultSet = statement.executeQuery(ALL);
             while (resultSet.next()) {
                 User user = new User();
@@ -96,7 +89,7 @@ public class UserDaoJDBCImpl implements UserDao {
                 users.add(user);
                 System.out.println(users);
             }
-            connection.commit();
+            CONNECTION.commit();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -104,11 +97,10 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void cleanUsersTable () {
-        try {
-            statement = connection.createStatement();
+        try (Statement statement = CONNECTION.createStatement()) {
             statement.executeUpdate(CLEAR);
             System.out.println("Таблица очищена");
-            connection.commit();
+            CONNECTION.commit();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
